@@ -68,6 +68,14 @@ describe 'etckeeper' do
             .with_cwd('/etc')
         end
 
+        it do
+          is_expected.to contain_exec('etckeeper commit')
+            .with_command('etckeeper commit "Initial commit"')
+            .with_cwd('/etc')
+            .with_refreshonly(true)
+            .that_subscribes_to('Exec[etckeeper init]')
+        end
+
         ['/etc/.bzr', '/etc/.hg', '/etc/_darcs'].each do |directory|
           it { is_expected.to contain_file(directory).with_ensure('absent').with_force(true).that_comes_before('Exec[etckeeper init]') }
         end

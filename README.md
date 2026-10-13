@@ -64,7 +64,7 @@ include etckeeper
 
 This keeps `/etc` in git. On Debian and Ubuntu, the etckeeper package
 initialises the repository and commits `/etc` when it is installed; on the
-other distributions, the module initialises the repository.
+other distributions, and when the VCS changes, the module does it.
 
 ## Usage
 

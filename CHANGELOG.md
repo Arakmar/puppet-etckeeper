@@ -32,6 +32,8 @@ of the README.
   levels.
 * `daily_autocommit_timer` manages the `etckeeper.timer` systemd unit, the
   only daily autocommit of Arch Linux.
+* The module commits `/etc` once it has initialised the repository, like
+  the package of Debian does.
 * The package manager types accept every package manager etckeeper knows.
 * `vcs_packages` is merged with the module data.
 * The VCS package is declared with `stdlib::ensure_packages`, so another

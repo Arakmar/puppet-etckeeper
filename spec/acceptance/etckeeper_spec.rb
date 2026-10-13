@@ -61,7 +61,13 @@ describe 'etckeeper' do
         its(:content) { is_expected.to match(%r{^#{Regexp.escape(paths[:ignore_line])}$}) }
       end
 
-      describe command('touch /etc/acceptance-test "/etc/#ignored-file" && etckeeper commit "Acceptance test"') do
+      # By the module, or by the package of Debian and Ubuntu with git
+      describe command(paths[:log]) do
+        its(:stdout) { is_expected.to match(%r{Initial commit}) }
+      end
+
+      # The files exist from the previous VCS, which the initial commit added
+      describe command("echo #{vcs} >> /etc/acceptance-test && touch '/etc/#ignored-file' && etckeeper commit 'Acceptance test'") do
         its(:exit_status) { is_expected.to eq 0 }
       end
 

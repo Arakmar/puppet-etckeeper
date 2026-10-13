@@ -5,8 +5,9 @@
 # VCS are removed, with their history.
 #
 # The ignore file and the patterns of etckeeper::ignore are written before
-# `etckeeper init` adds the files of /etc. On Debian, the etckeeper package
-# initialises the repository itself, before any of them.
+# `etckeeper init` adds the files of /etc, which are then committed like the
+# etckeeper package of Debian does when it initialises the repository
+# itself, before any of them.
 #
 # @api private
 class etckeeper::repository {
@@ -14,6 +15,7 @@ class etckeeper::repository {
 
   $vcs = $etckeeper::vcs
   $paths = etckeeper::vcs_paths()
+  $path = ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin']
 
   $paths.each |Etckeeper::VCS $other_vcs, Hash $other_paths| {
     if $other_vcs != $vcs {
@@ -46,6 +48,14 @@ class etckeeper::repository {
     command => 'etckeeper init',
     creates => $paths[$vcs]['directory'],
     cwd     => '/etc',
-    path    => ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin'],
+    path    => $path,
+  }
+
+  exec { 'etckeeper commit':
+    command     => 'etckeeper commit "Initial commit"',
+    cwd         => '/etc',
+    path        => $path,
+    refreshonly => true,
+    subscribe   => Exec['etckeeper init'],
   }
 }
