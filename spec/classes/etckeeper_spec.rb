@@ -17,7 +17,9 @@ describe 'etckeeper' do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_class('etckeeper::install').that_comes_before('Class[etckeeper::config]') }
         it { is_expected.to contain_class('etckeeper::config').that_comes_before('Class[etckeeper::repository]') }
-        it { is_expected.to contain_class('etckeeper::repository') }
+        it { is_expected.to contain_class('etckeeper::repository').that_comes_before('Class[etckeeper::service]') }
+        it { is_expected.to contain_class('etckeeper::service') }
+        it { is_expected.not_to contain_service('etckeeper.timer') }
 
         it { is_expected.to contain_package('etckeeper').with_ensure('installed') }
         it { is_expected.to contain_package('git').with_ensure('installed').that_comes_before('Exec[etckeeper init]') }
@@ -184,6 +186,19 @@ describe 'etckeeper' do
             PUSH_REMOTE="origin backup"
           CONF
         end
+      end
+
+      context 'with the daily autocommit timer' do
+        let(:params) { { daily_autocommit_timer: true } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_service('etckeeper.timer').with_ensure('running').with_enable(true) }
+      end
+
+      context 'without the daily autocommit timer' do
+        let(:params) { { daily_autocommit_timer: false } }
+
+        it { is_expected.to contain_service('etckeeper.timer').with_ensure('stopped').with_enable(false) }
       end
 
       context 'with ignores' do

@@ -30,6 +30,8 @@ of the README.
 * `package_ensure` sets the version of the etckeeper package.
 * `ignores` declares `etckeeper::ignore` resources, merged across the Hiera
   levels.
+* `daily_autocommit_timer` manages the `etckeeper.timer` systemd unit, the
+  only daily autocommit of Arch Linux.
 * The package manager types accept every package manager etckeeper knows.
 * `vcs_packages` is merged with the module data.
 * The VCS package is declared with `stdlib::ensure_packages`, so another

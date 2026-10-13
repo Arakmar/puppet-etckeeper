@@ -22,9 +22,10 @@ describe 'etckeeper' do
         let(:manifest) do
           <<~PUPPET
             class { 'etckeeper':
-              vcs            => '#{vcs}',
-              vcs_user_name  => 'Puppet',
-              vcs_user_email => 'puppet@example.com',
+              vcs                    => '#{vcs}',
+              vcs_user_name          => 'Puppet',
+              vcs_user_email         => 'puppet@example.com',
+              daily_autocommit_timer => true,
             }
 
             etckeeper::ignore { '#ignored*': }
@@ -37,6 +38,11 @@ describe 'etckeeper' do
         it { is_expected.to be_owned_by 'root' }
         it { is_expected.to be_mode 644 }
         its(:content) { is_expected.to match(%r{^VCS="#{vcs}"$}) }
+      end
+
+      describe service('etckeeper.timer') do
+        it { is_expected.to be_enabled }
+        it { is_expected.to be_running }
       end
 
       describe file(paths[:directory]) do

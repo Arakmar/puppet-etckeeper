@@ -12,6 +12,7 @@
     * [Beginning with etckeeper](#beginning-with-etckeeper)
 1. [Usage](#usage)
     * [Choosing the VCS](#choosing-the-vcs)
+    * [Daily autocommits](#daily-autocommits)
     * [Identity of the commits](#identity-of-the-commits)
     * [Ignoring files](#ignoring-files)
     * [Hiera](#hiera)
@@ -95,6 +96,23 @@ class { 'etckeeper':
 
 The package managers default to those of the OS family: apt/dpkg on Debian,
 dnf/rpm on EL, pacman on Arch Linux.
+
+### Daily autocommits
+
+On Debian and EL, a daily cron job of etckeeper commits the changes of
+`/etc`, unless `avoid_daily_autocommits` is set. Arch Linux has no such job,
+only the `etckeeper.timer` systemd unit, which its package does not enable:
+
+```puppet
+class { 'etckeeper':
+  daily_autocommit_timer => true,
+}
+```
+
+`daily_autocommit_timer` enables and starts the timer (`false` stops and
+disables it, undef leaves it alone). On Debian and EL, the cron job keeps
+running besides the timer: set `avoid_daily_autocommits` too to replace the
+job with the timer.
 
 ### Identity of the commits
 

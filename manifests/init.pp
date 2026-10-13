@@ -3,7 +3,7 @@
 # Installs etckeeper and the VCS it uses, writes etckeeper.conf and
 # initialises the repository of /etc. The package manager hooks of
 # etckeeper then commit the changes around each package installation, and
-# its daily cron job commits the others.
+# its daily cron job or systemd timer commits the others.
 #
 # @example Declaring the class
 #   include etckeeper
@@ -59,7 +59,13 @@
 #   DARCS_COMMIT_OPTIONS: options of `darcs record`.
 # @param avoid_daily_autocommits
 #   AVOID_DAILY_AUTOCOMMITS: stop the daily cron job of etckeeper from
-#   committing the changes of /etc.
+#   committing the changes of /etc. It does not affect the systemd timer.
+# @param daily_autocommit_timer
+#   Whether the `etckeeper.timer` systemd unit, which commits the changes of
+#   /etc daily, is enabled and running. Unmanaged when undef. Arch Linux has
+#   no daily cron job, only this timer, which its package does not enable.
+#   On Debian and EL, the cron job runs besides the timer unless
+#   `avoid_daily_autocommits` is set.
 # @param avoid_special_file_warning
 #   AVOID_SPECIAL_FILE_WARNING: do not warn about the special files of /etc
 #   that the VCS cannot store.
@@ -97,6 +103,7 @@ class etckeeper (
   Optional[String[1]]                  $bzr_commit_options          = undef,
   String[1]                            $darcs_commit_options        = '-a',
   Boolean                              $avoid_daily_autocommits     = false,
+  Optional[Boolean]                    $daily_autocommit_timer      = undef,
   Boolean                              $avoid_special_file_warning  = false,
   Boolean                              $avoid_commit_before_install = false,
   Array[String[1]]                     $push_remotes                = [],
@@ -107,8 +114,9 @@ class etckeeper (
   contain etckeeper::install
   contain etckeeper::config
   contain etckeeper::repository
+  contain etckeeper::service
 
-  Class['etckeeper::install'] -> Class['etckeeper::config'] -> Class['etckeeper::repository']
+  Class['etckeeper::install'] -> Class['etckeeper::config'] -> Class['etckeeper::repository'] -> Class['etckeeper::service']
 
   $ignores.each |String[1] $glob| {
     etckeeper::ignore { $glob: }

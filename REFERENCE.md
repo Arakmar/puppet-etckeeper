@@ -15,6 +15,7 @@
 * `etckeeper::config`: Writes the configuration of etckeeper.
 * `etckeeper::install`: Installs etckeeper and the package of the VCS.
 * `etckeeper::repository`: Initialises the repository of /etc.
+* `etckeeper::service`: Manages the systemd timer of the daily autocommits.
 
 ### Defined types
 
@@ -44,7 +45,7 @@
 Installs etckeeper and the VCS it uses, writes etckeeper.conf and
 initialises the repository of /etc. The package manager hooks of
 etckeeper then commit the changes around each package installation, and
-its daily cron job commits the others.
+its daily cron job or systemd timer commits the others.
 
 * **Since** 1.0.0
 
@@ -102,6 +103,7 @@ The following parameters are available in the `etckeeper` class:
 * [`bzr_commit_options`](#-etckeeper--bzr_commit_options)
 * [`darcs_commit_options`](#-etckeeper--darcs_commit_options)
 * [`avoid_daily_autocommits`](#-etckeeper--avoid_daily_autocommits)
+* [`daily_autocommit_timer`](#-etckeeper--daily_autocommit_timer)
 * [`avoid_special_file_warning`](#-etckeeper--avoid_special_file_warning)
 * [`avoid_commit_before_install`](#-etckeeper--avoid_commit_before_install)
 * [`push_remotes`](#-etckeeper--push_remotes)
@@ -213,9 +215,21 @@ Default value: `'-a'`
 Data type: `Boolean`
 
 AVOID_DAILY_AUTOCOMMITS: stop the daily cron job of etckeeper from
-committing the changes of /etc.
+committing the changes of /etc. It does not affect the systemd timer.
 
 Default value: `false`
+
+##### <a name="-etckeeper--daily_autocommit_timer"></a>`daily_autocommit_timer`
+
+Data type: `Optional[Boolean]`
+
+Whether the `etckeeper.timer` systemd unit, which commits the changes of
+/etc daily, is enabled and running. Unmanaged when undef. Arch Linux has
+no daily cron job, only this timer, which its package does not enable.
+On Debian and EL, the cron job runs besides the timer unless
+`avoid_daily_autocommits` is set.
+
+Default value: `undef`
 
 ##### <a name="-etckeeper--avoid_special_file_warning"></a>`avoid_special_file_warning`
 
