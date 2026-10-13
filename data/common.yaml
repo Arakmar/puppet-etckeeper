@@ -1,5 +1,7 @@
 ---
 lookup_options:
+  etckeeper::ignores:
+    merge: unique
   etckeeper::vcs_packages:
     merge: hash
 

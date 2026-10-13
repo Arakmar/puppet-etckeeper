@@ -5,7 +5,7 @@ class etckeeper::install {
   assert_private()
 
   package { $etckeeper::package_name:
-    ensure => installed,
+    ensure => $etckeeper::package_ensure,
   }
 
   if $etckeeper::manage_vcs_package {

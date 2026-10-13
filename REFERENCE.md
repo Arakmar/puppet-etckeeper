@@ -68,6 +68,14 @@ class { 'etckeeper':
 }
 ```
 
+##### Ignoring files from Hiera
+
+```puppet
+etckeeper::ignores:
+  - '/puppetlabs/code/environments/'
+  - '*.swp'
+```
+
 ##### Forcing the user name & email for commits
 
 ```puppet
@@ -83,6 +91,7 @@ The following parameters are available in the `etckeeper` class:
 
 * [`vcs`](#-etckeeper--vcs)
 * [`package_name`](#-etckeeper--package_name)
+* [`package_ensure`](#-etckeeper--package_ensure)
 * [`manage_vcs_package`](#-etckeeper--manage_vcs_package)
 * [`vcs_packages`](#-etckeeper--vcs_packages)
 * [`conf_dir`](#-etckeeper--conf_dir)
@@ -98,6 +107,7 @@ The following parameters are available in the `etckeeper` class:
 * [`push_remotes`](#-etckeeper--push_remotes)
 * [`vcs_user_name`](#-etckeeper--vcs_user_name)
 * [`vcs_user_email`](#-etckeeper--vcs_user_email)
+* [`ignores`](#-etckeeper--ignores)
 
 ##### <a name="-etckeeper--vcs"></a>`vcs`
 
@@ -115,6 +125,15 @@ Data type: `String[1]`
 The etckeeper package.
 
 Default value: `'etckeeper'`
+
+##### <a name="-etckeeper--package_ensure"></a>`package_ensure`
+
+Data type: `String[1]`
+
+The `ensure` of the etckeeper package, `latest` or a version for
+instance.
+
+Default value: `'installed'`
 
 ##### <a name="-etckeeper--manage_vcs_package"></a>`manage_vcs_package`
 
@@ -243,6 +262,15 @@ Data type: `Optional[String[1]]`
 The email the commits are made with, along with `vcs_user_name`.
 
 Default value: `undef`
+
+##### <a name="-etckeeper--ignores"></a>`ignores`
+
+Data type: `Array[String[1]]`
+
+Globs to ignore, each declaring an `etckeeper::ignore` resource. The
+module data merges the values found at every Hiera level.
+
+Default value: `[]`
 
 ## Defined types
 

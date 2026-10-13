@@ -120,9 +120,9 @@ describe 'etckeeper' do
       end
 
       context 'with other package names' do
-        let(:params) { { package_name: 'etckeeper-git', vcs_packages: { 'git' => 'git-core' } } }
+        let(:params) { { package_name: 'etckeeper-git', package_ensure: 'latest', vcs_packages: { 'git' => 'git-core' } } }
 
-        it { is_expected.to contain_package('etckeeper-git') }
+        it { is_expected.to contain_package('etckeeper-git').with_ensure('latest') }
         it { is_expected.to contain_package('git-core').that_comes_before('Exec[etckeeper init]') }
       end
 
@@ -184,6 +184,16 @@ describe 'etckeeper' do
             PUSH_REMOTE="origin backup"
           CONF
         end
+      end
+
+      context 'with ignores' do
+        let(:params) { { ignores: ['*.swp', '/puppetlabs/code/environments/'] } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_etckeeper__ignore('*.swp') }
+        it { is_expected.to contain_etckeeper__ignore('/puppetlabs/code/environments/') }
+        it { is_expected.to contain_file_line('/etc/.gitignore *.swp').with_line('*.swp') }
+        it { is_expected.to contain_file_line('/etc/.gitignore /puppetlabs/code/environments/').with_line('/puppetlabs/code/environments/') }
       end
 
       context 'with commit options to quote' do

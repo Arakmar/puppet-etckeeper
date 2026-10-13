@@ -13,6 +13,11 @@
 #     vcs => 'hg',
 #   }
 #
+# @example Ignoring files from Hiera
+#   etckeeper::ignores:
+#     - '/puppetlabs/code/environments/'
+#     - '*.swp'
+#
 # @example Forcing the user name & email for commits
 #   class { 'etckeeper':
 #     vcs_user_name  => 'Alice',
@@ -24,6 +29,9 @@
 #   the previous one, with its history.
 # @param package_name
 #   The etckeeper package.
+# @param package_ensure
+#   The `ensure` of the etckeeper package, `latest` or a version for
+#   instance.
 # @param manage_vcs_package
 #   Whether to install the package of the VCS, from `vcs_packages`. It is
 #   declared with `stdlib::ensure_packages`, so an identical declaration
@@ -68,6 +76,9 @@
 #   for hg and bzr; darcs always records the user running etckeeper.
 # @param vcs_user_email
 #   The email the commits are made with, along with `vcs_user_name`.
+# @param ignores
+#   Globs to ignore, each declaring an `etckeeper::ignore` resource. The
+#   module data merges the values found at every Hiera level.
 #
 # @see puppet_defined_types::etckeeper::ignore etckeeper::ignore
 #
@@ -78,6 +89,7 @@ class etckeeper (
   Hash[Etckeeper::VCS, String[1]]      $vcs_packages,
   Etckeeper::VCS                       $vcs                         = 'git',
   String[1]                            $package_name                = 'etckeeper',
+  String[1]                            $package_ensure              = 'installed',
   Boolean                              $manage_vcs_package          = true,
   Stdlib::Absolutepath                 $conf_dir                    = '/etc/etckeeper',
   Optional[String[1]]                  $git_commit_options          = undef,
@@ -90,10 +102,15 @@ class etckeeper (
   Array[String[1]]                     $push_remotes                = [],
   Optional[String[1]]                  $vcs_user_name               = undef,
   Optional[String[1]]                  $vcs_user_email              = undef,
+  Array[String[1]]                     $ignores                     = [],
 ) {
   contain etckeeper::install
   contain etckeeper::config
   contain etckeeper::repository
 
   Class['etckeeper::install'] -> Class['etckeeper::config'] -> Class['etckeeper::repository']
+
+  $ignores.each |String[1] $glob| {
+    etckeeper::ignore { $glob: }
+  }
 }

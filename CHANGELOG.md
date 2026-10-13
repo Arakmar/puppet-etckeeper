@@ -27,6 +27,9 @@ of the README.
 
 **Features**
 
+* `package_ensure` sets the version of the etckeeper package.
+* `ignores` declares `etckeeper::ignore` resources, merged across the Hiera
+  levels.
 * The package manager types accept every package manager etckeeper knows.
 * `vcs_packages` is merged with the module data.
 * The VCS package is declared with `stdlib::ensure_packages`, so another

@@ -145,7 +145,14 @@ etckeeper::vcs_user_name: 'etckeeper'
 etckeeper::vcs_user_email: 'root@example.com'
 etckeeper::vcs_packages:
   git: 'git-core'
+etckeeper::ignores:
+  - '/puppetlabs/code/environments/'
+  - '*.swp'
 ```
+
+`ignores` declares an `etckeeper::ignore` for each glob; the module data
+merges the lists found at every Hiera level, and `vcs_packages` with the
+module data.
 
 ## Upgrading from bodgit-etckeeper
 
