@@ -43,7 +43,7 @@ module EtckeeperAcceptance
   # Whether the package manager of the host can install a package.
   def package_available?(package)
     command = case fact('os.family')
-              when 'Debian' then "apt-cache show #{package}"
+              when 'Debian' then "apt-get install --simulate --quiet #{package}"
               when 'RedHat' then "dnf --quiet info #{package}"
               when 'Archlinux' then "pacman -Si #{package}"
               else raise "Unsupported OS family #{fact('os.family')}"
