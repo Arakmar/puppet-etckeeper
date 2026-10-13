@@ -298,6 +298,9 @@ does not remove it from the repository if it is already tracked, which is
 the case of the files present when the etckeeper package of Debian and
 Ubuntu initialises the repository itself.
 
+As it comes before `etckeeper init`, it cannot be ordered after
+`Class['etckeeper']`.
+
 * **Since** 1.2.0
 
 * **See also**

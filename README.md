@@ -189,6 +189,7 @@ and no longer uses puppetlabs/inifile.
 | `vcs` defaulted to `bzr` on Ubuntu 14.04                            | `git` everywhere                                                                       |
 | `etckeeper::ignore` lines `\#glob` (hg) and `#glob` (bzr)           | `glob:\#glob` and `[#]glob`, which do not depend on their position                    |
 | mode of `/etc/.git/config` forced to 0644                           | left to git                                                                            |
+| `etckeeper::ignore` applied after the class                         | applied before `etckeeper init`: it cannot `require` `Class['etckeeper']`, which would be a dependency cycle |
 
 The `etckeeper::ignore` lines written by the previous version stay in the
 ignore files. With hg, and bzr for the globs starting with `#`, the new lines
@@ -200,6 +201,8 @@ are added next to them.
 * The VCS cannot be switched without losing the history of the previous one.
 * `etckeeper::ignore` does not remove the files already tracked from the
   repository.
+* `etckeeper::ignore` resources are applied before `etckeeper init`, so they
+  cannot be ordered after `Class['etckeeper']`.
 * With Breezy, `etckeeper unclean` always reports changes in `/etc`.
 
 ## Development

@@ -24,6 +24,8 @@ of the README.
   for bzr, and Ubuntu 14.04 no longer defaults to bzr.
 * `etckeeper::ignore` prefixes hg patterns with `glob:` and writes a leading
   `#` as `[#]` for bzr and `\#` for darcs.
+* `etckeeper::ignore` is applied before `etckeeper init`, so it can no
+  longer be ordered after `Class['etckeeper']`.
 
 **Features**
 
