@@ -10,6 +10,8 @@
   Etckeeper::PackageManager::HighLevel $highlevel_package_manager,
   Etckeeper::PackageManager::LowLevel  $lowlevel_package_manager,
   Array[String[1]]                     $push_remotes,
+  Optional[String[1]]                  $vcs_user_name,
+  Optional[String[1]]                  $vcs_user_email,
 | -%>
 # This file is managed by Puppet.
 
@@ -52,3 +54,28 @@ LOWLEVEL_PACKAGE_MANAGER=<%= $lowlevel_package_manager %>
 
 # Remotes each commit is pushed to.
 PUSH_REMOTE=<%= etckeeper::shell_quote($push_remotes.join(' ')) %>
+<% if $vcs_user_name and $vcs_user_email { -%>
+<%   case $vcs { -%>
+<%     'git': { -%>
+
+# Identity of the commits, instead of the user running etckeeper.
+export GIT_AUTHOR_NAME=<%= etckeeper::shell_quote($vcs_user_name) %>
+export GIT_AUTHOR_EMAIL=<%= etckeeper::shell_quote($vcs_user_email) %>
+export GIT_COMMITTER_NAME=<%= etckeeper::shell_quote($vcs_user_name) %>
+export GIT_COMMITTER_EMAIL=<%= etckeeper::shell_quote($vcs_user_email) %>
+<%     } -%>
+<%     'hg': { -%>
+
+# Identity of the commits, instead of the user running etckeeper.
+export HGUSER=<%= etckeeper::shell_quote("${vcs_user_name} <${vcs_user_email}>") %>
+<%     } -%>
+<%     'bzr': { -%>
+
+# Identity of the commits, instead of the user running etckeeper.
+export EMAIL=<%= etckeeper::shell_quote("${vcs_user_name} <${vcs_user_email}>") %>
+<%     } -%>
+<%     default: { -%>
+<%#      darcs records the user running etckeeper, whatever its environment -%>
+<%     } -%>
+<%   } -%>
+<% } -%>

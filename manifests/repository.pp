@@ -36,33 +36,4 @@ class etckeeper::repository {
     cwd     => '/etc',
     path    => ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin'],
   }
-
-  if $vcs == 'git' {
-    file { '/etc/.git/config':
-      ensure  => file,
-      owner   => 'root',
-      group   => 'root',
-      mode    => '0644',
-      require => Exec['etckeeper init'],
-    }
-
-    if $etckeeper::vcs_user_name and $etckeeper::vcs_user_email {
-      ini_setting {
-        default:
-          ensure  => present,
-          path    => '/etc/.git/config',
-          section => 'user',
-          require => File['/etc/.git/config'],
-          ;
-        '/etc/.git/config user.name':
-          setting => 'name',
-          value   => $etckeeper::vcs_user_name,
-          ;
-        '/etc/.git/config user.email':
-          setting => 'email',
-          value   => $etckeeper::vcs_user_email,
-          ;
-      }
-    }
-  }
 }

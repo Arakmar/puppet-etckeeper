@@ -28,6 +28,8 @@ class etckeeper::config {
         'highlevel_package_manager'   => $etckeeper::highlevel_package_manager,
         'lowlevel_package_manager'    => $etckeeper::lowlevel_package_manager,
         'push_remotes'                => $etckeeper::push_remotes,
+        'vcs_user_name'               => $etckeeper::vcs_user_name,
+        'vcs_user_email'              => $etckeeper::vcs_user_email,
     }),
   }
 }

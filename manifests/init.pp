@@ -62,9 +62,12 @@
 #   PUSH_REMOTE: the remotes each commit is pushed to, with git or hg. They
 #   must be configured in the repository.
 # @param vcs_user_name
-#   The name of the author of the commits, used along with `vcs_user_email`.
+#   The name the commits are made with, along with `vcs_user_email`, instead
+#   of the user running etckeeper (or the one behind sudo). Exported from
+#   etckeeper.conf as the git author and committer, or in HGUSER and EMAIL
+#   for hg and bzr; darcs always records the user running etckeeper.
 # @param vcs_user_email
-#   The email of the author of the commits, used along with `vcs_user_name`.
+#   The email the commits are made with, along with `vcs_user_name`.
 #
 # @see puppet_defined_types::etckeeper::ignore etckeeper::ignore
 #

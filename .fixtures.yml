@@ -6,6 +6,3 @@ fixtures:
     stdlib:
       repo: "puppetlabs/stdlib"
       ref: "10.1.0"
-    inifile:
-      repo: "puppetlabs/inifile"
-      ref: "6.5.0"
