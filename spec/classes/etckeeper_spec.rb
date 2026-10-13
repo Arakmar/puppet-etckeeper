@@ -74,8 +74,8 @@ describe 'etckeeper' do
           it { is_expected.to contain_file(ignore_file).with_ensure('absent').that_comes_before('Exec[etckeeper init]') }
         end
 
+        it { is_expected.to contain_file('/etc/.gitignore').with_ensure('file').that_comes_before('Exec[etckeeper init]') }
         it { is_expected.not_to contain_file('/etc/.git') }
-        it { is_expected.not_to contain_file('/etc/.gitignore') }
       end
 
       {
@@ -93,8 +93,8 @@ describe 'etckeeper' do
           it { is_expected.to contain_exec('etckeeper init').with_creates(paths[:directory]) }
           it { is_expected.to contain_file('/etc/.git').with_ensure('absent').with_force(true) }
           it { is_expected.to contain_file('/etc/.gitignore').with_ensure('absent') }
+          it { is_expected.to contain_file(paths[:ignore_file]).with_ensure('file').that_comes_before('Exec[etckeeper init]') }
           it { is_expected.not_to contain_file(paths[:directory]) }
-          it { is_expected.not_to contain_file(paths[:ignore_file]) }
         end
       end
 

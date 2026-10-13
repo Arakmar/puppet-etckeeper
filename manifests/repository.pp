@@ -4,6 +4,10 @@
 # of its configuration, so the repositories and ignore files of the other
 # VCS are removed, with their history.
 #
+# The ignore file and the patterns of etckeeper::ignore are written before
+# `etckeeper init` adds the files of /etc. On Debian, the etckeeper package
+# initialises the repository itself, before any of them.
+#
 # @api private
 class etckeeper::repository {
   assert_private()
@@ -28,6 +32,14 @@ class etckeeper::repository {
 
   if $etckeeper::manage_vcs_package {
     Package[$etckeeper::vcs_packages[$vcs]] -> Exec['etckeeper init']
+  }
+
+  # Created before the repository, so that the patterns of etckeeper::ignore
+  # apply to the files `etckeeper init` adds. etckeeper then appends its own
+  # section to the file.
+  file { $paths[$vcs]['ignore_file']:
+    ensure => file,
+    before => Exec['etckeeper init'],
   }
 
   exec { 'etckeeper init':

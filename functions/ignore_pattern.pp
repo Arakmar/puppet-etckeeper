@@ -1,13 +1,22 @@
 # @summary Writes a glob in the syntax of the ignore file of a VCS.
 #
 # The glob is converted the way etckeeper converts its own patterns
-# (update-ignore.d/01update-ignore): git and hg escape `#`, which would
-# start a comment (etckeeper sets the glob syntax in .hgignore), bzr takes
-# the glob as is and darcs, which only understands regular expressions,
-# gets a regular expression anchored on path components, unless the glob
-# starts or ends with `*`.
+# (update-ignore.d/01update-ignore), except that the line must not depend on
+# its position in the file, as it may come before the section of etckeeper:
+#
+# * git escapes `#`, which would start a comment;
+# * hg escapes `#` too and prefixes the glob with `glob:`, since the
+#   `syntax: glob` line is in the section of etckeeper;
+# * bzr takes the glob as is, a leading `#` becoming `[#]` not to be a
+#   comment;
+# * darcs, which only understands regular expressions, gets one anchored on
+#   path components, unless the glob starts or ends with `*`, and a leading
+#   `#` escaped.
 #
 # @example
+#   etckeeper::ignore_pattern('git', '#*#')        # => '\#*\#'
+#   etckeeper::ignore_pattern('hg', '#*#')         # => 'glob:\#*\#'
+#   etckeeper::ignore_pattern('bzr', '#*#')        # => '[#]*#'
 #   etckeeper::ignore_pattern('darcs', '*.dpkg-*') # => '\.dpkg-'
 #
 # @param vcs
@@ -22,14 +31,18 @@
 function etckeeper::ignore_pattern(Etckeeper::VCS $vcs, String[1] $glob) >> String[1] {
   case $vcs {
     'bzr': {
-      $glob
+      $glob.regsubst(/\A#/, '[#]')
     }
     'darcs': {
       $without_trailing_star = $glob.regsubst(/\*\z/, '')
       $without_stars = $without_trailing_star.regsubst(/\A\*/, '')
       $prefix = bool2str($without_stars == $without_trailing_star, '(^|/)', '')
       $suffix = bool2str($without_trailing_star == $glob, '($|/)', '')
-      "${prefix}${without_stars}${suffix}".regsubst(/\./, '\\.', 'G').regsubst(/\*/, '[^/]*', 'G').regsubst(/\?/, '[^/]', 'G')
+      "${prefix}${without_stars}${suffix}".regsubst(/\./, '\\.', 'G').regsubst(/\*/, '[^/]*', 'G').regsubst(/\?/, '[^/]', 'G').regsubst(/\A#/, '\\#')
+    }
+    'hg': {
+      $escaped = $glob.regsubst('#', '\\#', 'G')
+      "glob:${escaped}"
     }
     default: {
       $glob.regsubst('#', '\\#', 'G')

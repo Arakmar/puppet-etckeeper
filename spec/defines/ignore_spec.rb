@@ -15,8 +15,8 @@ describe 'etckeeper::ignore' do
 
       {
         'git' => ['/etc/.gitignore', '\#test*'],
-        'hg' => ['/etc/.hgignore', '\#test*'],
-        'bzr' => ['/etc/.bzrignore', '#test*'],
+        'hg' => ['/etc/.hgignore', 'glob:\#test*'],
+        'bzr' => ['/etc/.bzrignore', '[#]test*'],
         'darcs' => ['/etc/.darcsignore', '(^|/)#test'],
       }.each do |vcs, (ignore_file, line)|
         context "with vcs => #{vcs}" do
@@ -29,7 +29,8 @@ describe 'etckeeper::ignore' do
               .with_ensure('present')
               .with_path(ignore_file)
               .with_line(line)
-              .that_requires('Class[etckeeper::repository]')
+              .that_requires("File[#{ignore_file}]")
+              .that_comes_before('Exec[etckeeper init]')
           end
         end
       end

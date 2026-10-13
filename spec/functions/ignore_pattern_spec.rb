@@ -7,15 +7,19 @@ describe 'etckeeper::ignore_pattern' do
   it { is_expected.to run.with_params('git', '').and_raise_error(ArgumentError) }
   it { is_expected.to run.with_params('svn', '*.swp').and_raise_error(ArgumentError) }
 
-  context 'with git and hg' do
-    ['git', 'hg'].each do |vcs|
-      it { is_expected.to run.with_params(vcs, '*.dpkg-*').and_return('*.dpkg-*') }
-      it { is_expected.to run.with_params(vcs, '#*#').and_return('\#*\#') }
-    end
+  context 'with git' do
+    it { is_expected.to run.with_params('git', '*.dpkg-*').and_return('*.dpkg-*') }
+    it { is_expected.to run.with_params('git', '#*#').and_return('\#*\#') }
+  end
+
+  context 'with hg' do
+    it { is_expected.to run.with_params('hg', '*.dpkg-*').and_return('glob:*.dpkg-*') }
+    it { is_expected.to run.with_params('hg', '#*#').and_return('glob:\#*\#') }
   end
 
   context 'with bzr' do
-    it { is_expected.to run.with_params('bzr', '#*#').and_return('#*#') }
+    it { is_expected.to run.with_params('bzr', '*.dpkg-*').and_return('*.dpkg-*') }
+    it { is_expected.to run.with_params('bzr', '#*#').and_return('[#]*#') }
   end
 
   # The patterns etckeeper writes itself for darcs
@@ -28,5 +32,7 @@ describe 'etckeeper::ignore_pattern' do
     it { is_expected.to run.with_params('darcs', '*.new-*_[0-9]*').and_return('\.new-[^/]*_[0-9]') }
     it { is_expected.to run.with_params('darcs', 'a?b*c').and_return('(^|/)a[^/]b[^/]*c($|/)') }
     it { is_expected.to run.with_params('darcs', '*').and_return('(^|/)') }
+    it { is_expected.to run.with_params('darcs', '#*#').and_return('(^|/)#[^/]*#($|/)') }
+    it { is_expected.to run.with_params('darcs', '*#').and_return('\#($|/)') }
   end
 end
