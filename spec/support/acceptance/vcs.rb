@@ -1,0 +1,57 @@
+# frozen_string_literal: true
+
+# How the acceptance tests inspect the repository of /etc with each VCS.
+module EtckeeperAcceptance
+  VCS = {
+    'git' => {
+      directory: '/etc/.git',
+      ignore_file: '/etc/.gitignore',
+      ignore_line: '\\#ignored*',
+      tracked_files: 'git -C /etc ls-files',
+      last_commit_identity: 'git -C /etc log -1 --format="%an <%ae> / %cn <%ce>"',
+      identity: 'Puppet <puppet@example.com> / Puppet <puppet@example.com>',
+    },
+    'hg' => {
+      directory: '/etc/.hg',
+      ignore_file: '/etc/.hgignore',
+      ignore_line: 'glob:\\#ignored*',
+      tracked_files: 'hg --cwd /etc files',
+      last_commit_identity: 'hg --cwd /etc log --limit 1 --template "{author}\\n"',
+      identity: 'Puppet <puppet@example.com>',
+    },
+    'bzr' => {
+      directory: '/etc/.bzr',
+      ignore_file: '/etc/.bzrignore',
+      ignore_line: '[#]ignored*',
+      tracked_files: 'cd /etc && bzr ls --versioned --recursive',
+      last_commit_identity: 'cd /etc && bzr log --limit 1 --log-format long | sed -n "s/^committer: //p"',
+      identity: 'Puppet <puppet@example.com>',
+      # The {clean} keyword of breezy, which `etckeeper unclean` relies on,
+      # is always 0
+      unclean_works: false,
+    },
+    'darcs' => {
+      directory: '/etc/_darcs',
+      ignore_file: '/etc/.darcsignore',
+      ignore_line: '(^|/)#ignored',
+      tracked_files: 'cd /etc && darcs show files',
+      # darcs records the user running etckeeper
+      last_commit_identity: nil,
+    },
+  }.freeze
+
+  # Whether the package manager of the host can install a package.
+  def package_available?(package)
+    command = case fact('os.family')
+              when 'Debian' then "apt-cache show #{package}"
+              when 'RedHat' then "dnf --quiet info #{package}"
+              when 'Archlinux' then "pacman -Si #{package}"
+              else raise "Unsupported OS family #{fact('os.family')}"
+              end
+    shell(command, acceptable_exit_codes: (0..255)).exit_code.zero?
+  end
+end
+
+RSpec.configure do |c|
+  c.include EtckeeperAcceptance
+end
