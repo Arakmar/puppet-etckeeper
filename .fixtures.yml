@@ -1,10 +1,11 @@
+# This file can be used to install module dependencies for unit testing
+# See https://github.com/puppetlabs/puppetlabs_spec_helper#using-fixtures for details
+---
 fixtures:
-  symlinks:
-    etckeeper: "#{source_dir}"
   forge_modules:
-    inifile:
-      repo: "puppetlabs/inifile"
-      ref: "5.0.1"
     stdlib:
       repo: "puppetlabs/stdlib"
-      ref: "7.1.0"
+      ref: "10.1.0"
+    inifile:
+      repo: "puppetlabs/inifile"
+      ref: "6.5.0"

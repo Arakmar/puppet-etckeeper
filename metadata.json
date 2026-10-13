@@ -1,74 +1,66 @@
 {
-  "name": "bodgit-etckeeper",
-  "version": "2.0.0",
-  "author": "bodgit",
-  "summary": "Puppet Module for managing etckeeper",
+  "name": "arakmar-etckeeper",
+  "version": "3.0.0",
+  "author": "Yoann Laissus",
+  "summary": "Keeps /etc under version control with etckeeper",
   "license": "Apache-2.0",
-  "source": "https://github.com/bodgit/puppet-etckeeper",
-  "project_page": "https://github.com/bodgit/puppet-etckeeper",
-  "issues_url": "https://github.com/bodgit/puppet-etckeeper/issues",
+  "source": "https://github.com/Arakmar/puppet-etckeeper",
+  "project_page": "https://github.com/Arakmar/puppet-etckeeper",
+  "issues_url": "https://github.com/Arakmar/puppet-etckeeper/issues",
   "dependencies": [
     {
       "name": "puppetlabs/stdlib",
-      "version_requirement": ">=4.13.0 <8.0.0"
+      "version_requirement": ">= 9.0.0 < 11.0.0"
     },
     {
       "name": "puppetlabs/inifile",
-      "version_requirement": ">=1.6.0 <6.0.0"
+      "version_requirement": ">= 6.0.0 < 7.0.0"
     }
   ],
   "operatingsystem_support": [
     {
       "operatingsystem": "RedHat",
       "operatingsystemrelease": [
-        "6",
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "CentOS",
-      "operatingsystemrelease": [
-        "6",
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "OracleLinux",
-      "operatingsystemrelease": [
-        "6",
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "Scientific",
-      "operatingsystemrelease": [
-        "6",
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "Ubuntu",
-      "operatingsystemrelease": [
-        "14.04",
-        "16.04",
-        "18.04",
-        "20.04"
-      ]
-    },
-    {
-      "operatingsystem": "Debian",
-      "operatingsystemrelease": [
-        "7",
         "8",
         "9",
         "10"
       ]
     },
     {
-      "operatingsystem": "SLES",
+      "operatingsystem": "CentOS",
       "operatingsystemrelease": [
-        "11",
-        "12"
+        "9",
+        "10"
+      ]
+    },
+    {
+      "operatingsystem": "Rocky",
+      "operatingsystemrelease": [
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "operatingsystem": "AlmaLinux",
+      "operatingsystemrelease": [
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "12",
+        "13"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "22.04",
+        "24.04"
       ]
     },
     {
@@ -78,13 +70,20 @@
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">=5.5.10 <8.0.0"
+      "version_requirement": ">= 8.0.0 < 9.0.0"
+    },
+    {
+      "name": "openvox",
+      "version_requirement": ">= 8.0.0 < 9.0.0"
     }
   ],
   "tags": [
-    "etckeeper"
+    "etckeeper",
+    "git",
+    "vcs",
+    "etc"
   ],
-  "pdk-version": "2.1.0",
-  "template-url": "https://github.com/puppetlabs/pdk-templates#2.1.0",
-  "template-ref": "tags/2.1.0-0-ga675ea5"
+  "pdk-version": "3.4.0",
+  "template-url": "https://github.com/puppetlabs/pdk-templates#3.4.0",
+  "template-ref": "tags/3.4.0-0-gd3cc13f"
 }
