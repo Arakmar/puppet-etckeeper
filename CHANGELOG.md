@@ -10,7 +10,7 @@ of the README.
 
 **Breaking changes**
 
-* Puppet 8 (or OpenVox 8) and puppetlabs/stdlib 9.x or 10.x are required.
+* OpenVox 8 or 9 and puppetlabs/stdlib 9.x or 10.x are required.
   puppetlabs/inifile is no longer used. EL 6/7, Debian 7 to 10, Ubuntu 14.04
   to 20.04 and SLES 11/12 are no longer supported; EL 8 to 10, Debian 12 and
   13, Ubuntu 22.04 and 24.04 are.
@@ -41,9 +41,10 @@ of the README.
 * The VCS package is declared with `stdlib::ensure_packages`, so another
   class can install it too.
 * The values of etckeeper.conf are quoted for sh.
-* puppet-strings documentation (REFERENCE.md), rspec-puppet unit tests,
-  Beaker acceptance tests running every VCS in containers, GitHub Actions CI
-  and Forge release workflows.
+* openvox-strings documentation (REFERENCE.md), rspec-puppet unit tests and
+  Beaker acceptance tests running every VCS in containers, both on OpenVox 8
+  and 9, Vox Pupuli tooling (voxpupuli-test, voxpupuli-acceptance,
+  voxpupuli-release), GitHub Actions CI and Forge release workflows.
 
 **Bugfixes**
 

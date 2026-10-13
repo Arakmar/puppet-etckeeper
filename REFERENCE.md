@@ -151,8 +151,10 @@ Default value: `true`
 
 Data type: `Hash[Etckeeper::VCS, String[1]]`
 
-The package providing each VCS. Merged with the module data, which only
-lists the names that differ by OS family.
+The package providing each VCS. Merged with the module data, where
+`breezy` provides bzr on Arch Linux.
+
+Default value: `{ 'bzr' => 'bzr', 'darcs' => 'darcs', 'git' => 'git', 'hg' => 'mercurial' }`
 
 ##### <a name="-etckeeper--conf_dir"></a>`conf_dir`
 
@@ -367,7 +369,7 @@ its position in the file, as it may come before the section of etckeeper:
 
 #### Examples
 
-##### 
+#####
 
 ```puppet
 etckeeper::ignore_pattern('git', '#*#')        # => '\#*\#'
@@ -395,7 +397,7 @@ Returns: `String[1]` The line to add to the ignore file.
 
 ##### Examples
 
-###### 
+######
 
 ```puppet
 etckeeper::ignore_pattern('git', '#*#')        # => '\#*\#'
@@ -441,4 +443,3 @@ A VCS etckeeper can keep /etc in.
 * **Since** 1.0.0
 
 Alias of `Enum['bzr', 'darcs', 'git', 'hg']`
-

@@ -37,8 +37,8 @@
 #   declared with `stdlib::ensure_packages`, so an identical declaration
 #   elsewhere does not clash with it.
 # @param vcs_packages
-#   The package providing each VCS. Merged with the module data, which only
-#   lists the names that differ by OS family.
+#   The package providing each VCS. Merged with the module data, where
+#   `breezy` provides bzr on Arch Linux.
 # @param conf_dir
 #   The configuration directory of etckeeper.
 # @param highlevel_package_manager

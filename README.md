@@ -46,14 +46,14 @@ one.**
 
 ### Requirements
 
-* Puppet 8 or OpenVox 8.
+* OpenVox 8 or 9. Perforce Puppet 8 is no longer tested.
 * [puppetlabs/stdlib](https://forge.puppet.com/modules/puppetlabs/stdlib) 9.x
   or 10.x.
 * On EL, the [EPEL](https://docs.fedoraproject.org/en-US/epel/) repository,
   for instance from [puppet/epel](https://forge.puppet.com/modules/puppet/epel).
 
-The module is tested on EL 8 to 10 (RHEL, CentOS Stream, Rocky, AlmaLinux),
-Debian 12 and 13, Ubuntu 22.04 and 24.04 and Arch Linux. Its data also covers
+The module is tested with OpenVox 8 and 9 on EL 8 to 10 (RHEL, CentOS Stream,
+Rocky, AlmaLinux), Debian 12 and 13, Ubuntu 22.04 and 24.04 and Arch Linux. Its data also covers
 SUSE (zypper), untested.
 
 ### Beginning with etckeeper
@@ -175,7 +175,7 @@ module data.
 ## Upgrading from bodgit-etckeeper
 
 Version 3.0.0 follows bodgit-etckeeper 2.0.0, which is no longer maintained,
-under the name `arakmar-etckeeper`. It needs Puppet 8 and stdlib 9 or later,
+under the name `arakmar-etckeeper`. It needs OpenVox 8 or 9 and stdlib 9 or later,
 and no longer uses puppetlabs/inifile.
 
 | Before                                                              | Now                                                                                   |
@@ -207,27 +207,34 @@ are added next to them.
 
 ## Development
 
+The tooling is the one of Vox Pupuli
+([voxpupuli-test](https://github.com/voxpupuli/voxpupuli-test) and
+[voxpupuli-release](https://github.com/voxpupuli/voxpupuli-release)) and runs
+on OpenVox, set `OPENVOX_GEM_VERSION` to pick its version:
+
 ```
-pdk validate
-pdk test unit
-pdk bundle exec rake strings:generate:reference
+bundle install
+bundle exec rake validate lint check rubocop
+bundle exec rake parallel_spec
+bundle exec rake strings:generate:reference
+bundle exec rake module:build
 ```
 
 The acceptance tests run with
 [voxpupuli-acceptance](https://github.com/voxpupuli/voxpupuli-acceptance) in
-containers:
+containers, here on Debian 13 with OpenVox 9:
 
 ```
-pdk bundle config set --local with system_tests
-BEAKER_SETFILE=debian12-64 pdk bundle exec rspec spec/acceptance
+BEAKER_HYPERVISOR=container_podman BEAKER_SETFILE=debian13-64 BEAKER_PUPPET_COLLECTION=openvox9 bundle exec rake beaker
 ```
 
 GitHub Actions run the static validations, RuboCop, a REFERENCE.md freshness
-check and the unit tests on every pull request and push to `master`, and the
-acceptance tests on each supported OS with OpenVox 8 (Arch Linux with its own
-Puppet package), the matrices being built from `metadata.json`
-(`.github/workflows/ci.yml`, modelled on the
-[Vox Pupuli](https://github.com/voxpupuli/gha-puppet) workflows).
+check and the unit tests on OpenVox 8 (Ruby 3.2) and 9 (Ruby 4.0) on every pull
+request and push to `master`, and the acceptance tests on each supported OS
+with OpenVox 8 and 9 (Arch Linux with its own Puppet package), the matrices
+being built from `metadata.json` by the
+[Vox Pupuli](https://github.com/voxpupuli/gha-puppet) reusable workflow
+(`.github/workflows/ci.yml`).
 
 Pushing a `v<version>` tag runs the same CI on the tagged commit, checks that
 the tag matches the version of `metadata.json`, then publishes the module to

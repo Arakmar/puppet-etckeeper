@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
-# How the acceptance tests inspect the repository of /etc with each VCS.
+# The package of each VCS, the VCS name when the package of an OS family is
+# not listed, and how the acceptance tests inspect the repository of /etc.
 module EtckeeperAcceptance
   VCS = {
     'git' => {
+      package: 'git',
       directory: '/etc/.git',
       ignore_file: '/etc/.gitignore',
       ignore_line: '\\#ignored*',
@@ -13,6 +15,7 @@ module EtckeeperAcceptance
       identity: 'Puppet <puppet@example.com> / Puppet <puppet@example.com>',
     },
     'hg' => {
+      package: 'mercurial',
       directory: '/etc/.hg',
       ignore_file: '/etc/.hgignore',
       ignore_line: 'glob:\\#ignored*',
@@ -22,6 +25,7 @@ module EtckeeperAcceptance
       identity: 'Puppet <puppet@example.com>',
     },
     'bzr' => {
+      package: { 'Archlinux' => 'breezy' },
       directory: '/etc/.bzr',
       ignore_file: '/etc/.bzrignore',
       ignore_line: '[#]ignored*',
@@ -34,6 +38,7 @@ module EtckeeperAcceptance
       unclean_works: false,
     },
     'darcs' => {
+      package: 'darcs',
       directory: '/etc/_darcs',
       ignore_file: '/etc/.darcsignore',
       ignore_line: '(^|/)#ignored',
