@@ -1,98 +1,94 @@
+# frozen_string_literal: true
+
 require 'spec_helper_acceptance'
 
 describe 'etckeeper' do
-  it 'works with no errors' do
-    pp = <<-EOS
-      class { '::etckeeper':
-        vcs_user_name  => 'Vagrant User',
-        vcs_user_email => 'vagrant@example.com',
-      }
+  # Each VCS replaces the repository of the previous one
+  {
+    'git' => 'git',
+    'hg' => 'mercurial',
+    'bzr' => { 'Archlinux' => 'breezy' },
+    'darcs' => 'darcs',
+  }.each do |vcs, packages|
+    context "with vcs => #{vcs}" do
+      paths = EtckeeperAcceptance::VCS[vcs]
 
-      ::etckeeper::ignore { '#test':
-        ensure => present,
-      }
+      before(:context) do
+        package = packages.is_a?(Hash) ? packages.fetch(fact('os.family'), vcs) : packages
+        skip "#{package} is not available" unless package_available?(package)
+      end
 
-      if $::osfamily == 'RedHat' {
-        include ::epel
+      it_behaves_like 'an idempotent resource' do
+        let(:manifest) do
+          <<~PUPPET
+            class { 'etckeeper':
+              vcs                    => '#{vcs}',
+              vcs_user_name          => 'Puppet',
+              vcs_user_email         => 'puppet@example.com',
+              daily_autocommit_timer => true,
+            }
 
-        Class['::epel'] -> Class['::etckeeper']
-      }
-    EOS
+            etckeeper::ignore { '#ignored*': }
+          PUPPET
+        end
+      end
 
-    apply_manifest(pp, catch_failures: true)
-    apply_manifest(pp, catch_changes: true)
-  end
+      describe file('/etc/etckeeper/etckeeper.conf') do
+        it { is_expected.to be_file }
+        it { is_expected.to be_owned_by 'root' }
+        it { is_expected.to be_mode 644 }
+        its(:content) { is_expected.to match(%r{^VCS="#{vcs}"$}) }
+      end
 
-  describe package('etckeeper') do
-    it { is_expected.to be_installed }
-  end
+      describe service('etckeeper.timer') do
+        it { is_expected.to be_enabled }
+        it { is_expected.to be_running }
+      end
 
-  describe file('/etc/etckeeper/etckeeper.conf') do
-    it { is_expected.to be_file }
-    it { is_expected.to be_owned_by 'root' }
-    it { is_expected.to be_grouped_into 'root' }
-    it { is_expected.to be_mode 644 }
-  end
+      describe file(paths[:directory]) do
+        it { is_expected.to be_directory }
+        it { is_expected.to be_mode 700 }
+      end
 
-  describe file('/etc/.git'), unless: (fact('operatingsystem').eql?('Ubuntu') and fact('operatingsystemrelease').eql?('14.04')) do
-    it { is_expected.to be_directory }
-    it { is_expected.to be_owned_by 'root' }
-    it { is_expected.to be_grouped_into 'root' }
-    it { is_expected.to be_mode 700 }
-  end
+      (EtckeeperAcceptance::VCS.keys - [vcs]).each do |other_vcs|
+        describe file(EtckeeperAcceptance::VCS[other_vcs][:directory]) do
+          it { is_expected.not_to exist }
+        end
+      end
 
-  describe file('/etc/.bzr'), if: (fact('operatingsystem').eql?('Ubuntu') and fact('operatingsystemrelease').eql?('14.04')) do
-    it { is_expected.to be_directory }
-    it { is_expected.to be_owned_by 'root' }
-    it { is_expected.to be_grouped_into 'root' }
-    it { is_expected.to be_mode 700 }
-  end
+      describe file(paths[:ignore_file]) do
+        its(:content) { is_expected.to match(%r{^# end section managed by etckeeper$}) }
+        its(:content) { is_expected.to match(%r{^#{Regexp.escape(paths[:ignore_line])}$}) }
+      end
 
-  describe file('/etc/.git/config'), unless: (fact('operatingsystem').eql?('Ubuntu') and fact('operatingsystemrelease').eql?('14.04')) do
-    it { is_expected.to be_file }
-    it { is_expected.to be_owned_by 'root' }
-    it { is_expected.to be_grouped_into 'root' }
-    it { is_expected.to be_mode 644 }
-    its(:content) do
-      is_expected.to match(%r{^ \s* name \s* = \s* Vagrant \s User $}x)
-      is_expected.to match(%r{^ \s* email \s* = \s* vagrant@example\.com $}x)
+      # By the module, or by the package of Debian and Ubuntu with git
+      describe command(paths[:log]) do
+        its(:stdout) { is_expected.to match(%r{Initial commit}) }
+      end
+
+      # The files exist from the previous VCS, which the initial commit added
+      describe command("echo #{vcs} >> /etc/acceptance-test && touch '/etc/#ignored-file' && etckeeper commit 'Acceptance test'") do
+        its(:exit_status) { is_expected.to eq 0 }
+      end
+
+      describe command(paths[:tracked_files]) do
+        its(:exit_status) { is_expected.to eq 0 }
+        its(:stdout) { is_expected.to match(%r{^(\./)?acceptance-test$}) }
+        its(:stdout) { is_expected.to match(%r{^(\./)?etckeeper/etckeeper\.conf$}) }
+        its(:stdout) { is_expected.not_to match(%r{ignored-file}) }
+      end
+
+      if paths.fetch(:unclean_works, true)
+        describe command('etckeeper unclean') do
+          its(:exit_status) { is_expected.to eq 1 }
+        end
+      end
+
+      if paths[:last_commit_identity]
+        describe command(paths[:last_commit_identity]) do
+          its(:stdout) { is_expected.to eq "#{paths[:identity]}\n" }
+        end
+      end
     end
-  end
-
-  describe file('/etc/.gitignore'), unless: (fact('operatingsystem').eql?('Ubuntu') and fact('operatingsystemrelease').eql?('14.04')) do
-    it { is_expected.to be_file }
-    it { is_expected.to be_owned_by 'root' }
-    it { is_expected.to be_grouped_into 'root' }
-    it { is_expected.to be_mode 644 }
-    its(:content) { is_expected.to match(%r{^ \# \s end \s section .+ \r?\n \\\#test $}x) }
-  end
-
-  describe file('/etc/.bzrignore'), if: (fact('operatingsystem').eql?('Ubuntu') and fact('operatingsystemrelease').eql?('14.04')) do
-    it { is_expected.to be_file }
-    it { is_expected.to be_owned_by 'root' }
-    it { is_expected.to be_grouped_into 'root' }
-    it { is_expected.to be_mode 600 }
-    its(:content) { is_expected.to match(%r{^ \# \s end \s section .+ \r?\n \#test $}x) }
-  end
-
-  describe command('etckeeper commit "Initial commit"') do
-    its(:exit_status) { is_expected.to eq 0 }
-  end
-
-  describe file('/etc/.etckeeper') do
-    it { is_expected.to be_file }
-    it { is_expected.to be_owned_by 'root' }
-    it { is_expected.to be_grouped_into 'root' }
-    it { is_expected.to be_mode 700 }
-  end
-
-  describe command('cd /etc && git status'), unless: (fact('operatingsystem').eql?('Ubuntu') and fact('operatingsystemrelease').eql?('14.04')) do
-    its(:exit_status) { is_expected.to eq 0 }
-    its(:stdout) { is_expected.to match(%r{nothing to commit}) }
-  end
-
-  describe command('cd /etc && bzr status'), if: (fact('operatingsystem').eql?('Ubuntu') and fact('operatingsystemrelease').eql?('14.04')) do
-    its(:exit_status) { is_expected.to eq 0 }
-    its(:stdout) { is_expected.to eq '' }
   end
 end

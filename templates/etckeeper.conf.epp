@@ -1,0 +1,81 @@
+<%- |
+  Etckeeper::VCS                       $vcs,
+  Optional[String[1]]                  $git_commit_options,
+  Optional[String[1]]                  $hg_commit_options,
+  Optional[String[1]]                  $bzr_commit_options,
+  String[1]                            $darcs_commit_options,
+  Boolean                              $avoid_daily_autocommits,
+  Boolean                              $avoid_special_file_warning,
+  Boolean                              $avoid_commit_before_install,
+  Etckeeper::PackageManager::HighLevel $highlevel_package_manager,
+  Etckeeper::PackageManager::LowLevel  $lowlevel_package_manager,
+  Array[String[1]]                     $push_remotes,
+  Optional[String[1]]                  $vcs_user_name,
+  Optional[String[1]]                  $vcs_user_email,
+| -%>
+# This file is managed by Puppet.
+
+# The VCS to use.
+VCS="<%= $vcs %>"
+
+# Options passed to git commit when run by etckeeper.
+GIT_COMMIT_OPTIONS=<%= etckeeper::shell_quote($git_commit_options) %>
+
+# Options passed to hg commit when run by etckeeper.
+HG_COMMIT_OPTIONS=<%= etckeeper::shell_quote($hg_commit_options) %>
+
+# Options passed to bzr commit when run by etckeeper.
+BZR_COMMIT_OPTIONS=<%= etckeeper::shell_quote($bzr_commit_options) %>
+
+# Options passed to darcs record when run by etckeeper.
+DARCS_COMMIT_OPTIONS=<%= etckeeper::shell_quote($darcs_commit_options) %>
+<% if $avoid_daily_autocommits { -%>
+
+# Do not commit the changes of /etc from the daily cron job.
+AVOID_DAILY_AUTOCOMMITS=1
+<% } -%>
+<% if $avoid_special_file_warning { -%>
+
+# Do not warn about special files.
+AVOID_SPECIAL_FILE_WARNING=1
+<% } -%>
+<% if $avoid_commit_before_install { -%>
+
+# Cancel the installation of packages when /etc has uncommitted changes,
+# instead of committing them.
+AVOID_COMMIT_BEFORE_INSTALL=1
+<% } -%>
+
+# The high-level package manager that's being used.
+HIGHLEVEL_PACKAGE_MANAGER=<%= $highlevel_package_manager %>
+
+# The low-level package manager that's being used.
+LOWLEVEL_PACKAGE_MANAGER=<%= $lowlevel_package_manager %>
+
+# Remotes each commit is pushed to.
+PUSH_REMOTE=<%= etckeeper::shell_quote($push_remotes.join(' ')) %>
+<% if $vcs_user_name and $vcs_user_email { -%>
+<%   case $vcs { -%>
+<%     'git': { -%>
+
+# Identity of the commits, instead of the user running etckeeper.
+export GIT_AUTHOR_NAME=<%= etckeeper::shell_quote($vcs_user_name) %>
+export GIT_AUTHOR_EMAIL=<%= etckeeper::shell_quote($vcs_user_email) %>
+export GIT_COMMITTER_NAME=<%= etckeeper::shell_quote($vcs_user_name) %>
+export GIT_COMMITTER_EMAIL=<%= etckeeper::shell_quote($vcs_user_email) %>
+<%     } -%>
+<%     'hg': { -%>
+
+# Identity of the commits, instead of the user running etckeeper.
+export HGUSER=<%= etckeeper::shell_quote("${vcs_user_name} <${vcs_user_email}>") %>
+<%     } -%>
+<%     'bzr': { -%>
+
+# Identity of the commits, instead of the user running etckeeper.
+export EMAIL=<%= etckeeper::shell_quote("${vcs_user_name} <${vcs_user_email}>") %>
+<%     } -%>
+<%     default: { -%>
+<%#      darcs records the user running etckeeper, whatever its environment -%>
+<%     } -%>
+<%   } -%>
+<% } -%>

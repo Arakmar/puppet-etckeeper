@@ -6,25 +6,46 @@
 
 ### Classes
 
-* [`etckeeper`](#etckeeper): Installs etckeeper.
-* [`etckeeper::config`](#etckeeperconfig)
-* [`etckeeper::install`](#etckeeperinstall)
+#### Public Classes
+
+* [`etckeeper`](#etckeeper): Keeps /etc under version control with etckeeper.
+
+#### Private Classes
+
+* `etckeeper::config`: Writes the configuration of etckeeper.
+* `etckeeper::install`: Installs etckeeper and the package of the VCS.
+* `etckeeper::repository`: Initialises the repository of /etc.
+* `etckeeper::service`: Manages the systemd timer of the daily autocommits.
 
 ### Defined types
 
-* [`etckeeper::ignore`](#etckeeperignore): Add a glob pattern for the chosen VCS to ignore.
+* [`etckeeper::ignore`](#etckeeper--ignore): Ignores a glob in the repository of /etc.
+
+### Functions
+
+#### Public Functions
+
+* [`etckeeper::ignore_pattern`](#etckeeper--ignore_pattern): Writes a glob in the syntax of the ignore file of a VCS.
+
+#### Private Functions
+
+* `etckeeper::shell_quote`: Quotes a value for etckeeper.conf, which etckeeper sources with sh.
+* `etckeeper::vcs_paths`: The repository directory and ignore file of each VCS in /etc.
 
 ### Data types
 
-* [`Etckeeper::PackageManager::HighLevel`](#etckeeperpackagemanagerhighlevel)
-* [`Etckeeper::PackageManager::LowLevel`](#etckeeperpackagemanagerlowlevel)
-* [`Etckeeper::VCS`](#etckeepervcs)
+* [`Etckeeper::PackageManager::HighLevel`](#Etckeeper--PackageManager--HighLevel): A HIGHLEVEL_PACKAGE_MANAGER known to etckeeper.
+* [`Etckeeper::PackageManager::LowLevel`](#Etckeeper--PackageManager--LowLevel): A LOWLEVEL_PACKAGE_MANAGER known to etckeeper.
+* [`Etckeeper::VCS`](#Etckeeper--VCS): A VCS etckeeper can keep /etc in.
 
 ## Classes
 
 ### <a name="etckeeper"></a>`etckeeper`
 
-Installs etckeeper.
+Installs etckeeper and the VCS it uses, writes etckeeper.conf and
+initialises the repository of /etc. The package manager hooks of
+etckeeper then commit the changes around each package installation, and
+its daily cron job or systemd timer commits the others.
 
 * **Since** 1.0.0
 
@@ -44,15 +65,22 @@ include etckeeper
 
 ```puppet
 class { 'etckeeper':
-  vcs => 'bzr',
+  vcs => 'hg',
 }
+```
+
+##### Ignoring files from Hiera
+
+```puppet
+etckeeper::ignores:
+  - '/puppetlabs/code/environments/'
+  - '*.swp'
 ```
 
 ##### Forcing the user name & email for commits
 
 ```puppet
 class { 'etckeeper':
-  vcs            => 'git',
   vcs_user_name  => 'Alice',
   vcs_user_email => 'alice@example.com',
 }
@@ -62,139 +90,216 @@ class { 'etckeeper':
 
 The following parameters are available in the `etckeeper` class:
 
-* [`avoid_commit_before_install`](#avoid_commit_before_install)
-* [`avoid_daily_autocommits`](#avoid_daily_autocommits)
-* [`avoid_special_file_warning`](#avoid_special_file_warning)
-* [`bzr_commit_options`](#bzr_commit_options)
-* [`conf_dir`](#conf_dir)
-* [`darcs_commit_options`](#darcs_commit_options)
-* [`git_commit_options`](#git_commit_options)
-* [`hg_commit_options`](#hg_commit_options)
-* [`highlevel_package_manager`](#highlevel_package_manager)
-* [`lowlevel_package_manager`](#lowlevel_package_manager)
-* [`manage_vcs_package`](#manage_vcs_package)
-* [`package_name`](#package_name)
-* [`push_remotes`](#push_remotes)
-* [`vcs`](#vcs)
-* [`vcs_packages`](#vcs_packages)
-* [`vcs_user_email`](#vcs_user_email)
-* [`vcs_user_name`](#vcs_user_name)
+* [`vcs`](#-etckeeper--vcs)
+* [`package_name`](#-etckeeper--package_name)
+* [`package_ensure`](#-etckeeper--package_ensure)
+* [`manage_vcs_package`](#-etckeeper--manage_vcs_package)
+* [`vcs_packages`](#-etckeeper--vcs_packages)
+* [`conf_dir`](#-etckeeper--conf_dir)
+* [`highlevel_package_manager`](#-etckeeper--highlevel_package_manager)
+* [`lowlevel_package_manager`](#-etckeeper--lowlevel_package_manager)
+* [`git_commit_options`](#-etckeeper--git_commit_options)
+* [`hg_commit_options`](#-etckeeper--hg_commit_options)
+* [`bzr_commit_options`](#-etckeeper--bzr_commit_options)
+* [`darcs_commit_options`](#-etckeeper--darcs_commit_options)
+* [`avoid_daily_autocommits`](#-etckeeper--avoid_daily_autocommits)
+* [`daily_autocommit_timer`](#-etckeeper--daily_autocommit_timer)
+* [`avoid_special_file_warning`](#-etckeeper--avoid_special_file_warning)
+* [`avoid_commit_before_install`](#-etckeeper--avoid_commit_before_install)
+* [`push_remotes`](#-etckeeper--push_remotes)
+* [`vcs_user_name`](#-etckeeper--vcs_user_name)
+* [`vcs_user_email`](#-etckeeper--vcs_user_email)
+* [`ignores`](#-etckeeper--ignores)
 
-##### <a name="avoid_commit_before_install"></a>`avoid_commit_before_install`
-
-Data type: `Optional[Boolean]`
-
-
-
-##### <a name="avoid_daily_autocommits"></a>`avoid_daily_autocommits`
-
-Data type: `Optional[Boolean]`
-
-
-
-##### <a name="avoid_special_file_warning"></a>`avoid_special_file_warning`
-
-Data type: `Optional[Boolean]`
-
-
-
-##### <a name="bzr_commit_options"></a>`bzr_commit_options`
-
-Data type: `Optional[String]`
-
-
-
-##### <a name="conf_dir"></a>`conf_dir`
-
-Data type: `Stdlib::Absolutepath`
-
-Top-level configuration directory, usually `/etc/etckeeper`.
-
-##### <a name="darcs_commit_options"></a>`darcs_commit_options`
-
-Data type: `Optional[String]`
-
-
-
-##### <a name="git_commit_options"></a>`git_commit_options`
-
-Data type: `Optional[String]`
-
-
-
-##### <a name="hg_commit_options"></a>`hg_commit_options`
-
-Data type: `Optional[String]`
-
-
-
-##### <a name="highlevel_package_manager"></a>`highlevel_package_manager`
-
-Data type: `Etckeeper::PackageManager::HighLevel`
-
-
-
-##### <a name="lowlevel_package_manager"></a>`lowlevel_package_manager`
-
-Data type: `Etckeeper::PackageManager::LowLevel`
-
-
-
-##### <a name="manage_vcs_package"></a>`manage_vcs_package`
-
-Data type: `Boolean`
-
-
-
-##### <a name="package_name"></a>`package_name`
-
-Data type: `String`
-
-The name of the package.
-
-##### <a name="push_remotes"></a>`push_remotes`
-
-Data type: `Optional[Array[String, 1]]`
-
-
-
-##### <a name="vcs"></a>`vcs`
+##### <a name="-etckeeper--vcs"></a>`vcs`
 
 Data type: `Etckeeper::VCS`
 
+The VCS keeping /etc. Switching to another VCS removes the repository of
+the previous one, with its history.
 
+Default value: `'git'`
 
-##### <a name="vcs_packages"></a>`vcs_packages`
+##### <a name="-etckeeper--package_name"></a>`package_name`
 
-Data type: `Hash[Etckeeper::VCS, String]`
+Data type: `String[1]`
 
-Hash of VCS to the package that provides it.
+The etckeeper package.
 
-##### <a name="vcs_user_email"></a>`vcs_user_email`
+Default value: `'etckeeper'`
+
+##### <a name="-etckeeper--package_ensure"></a>`package_ensure`
+
+Data type: `String[1]`
+
+The `ensure` of the etckeeper package, `latest` or a version for
+instance.
+
+Default value: `'installed'`
+
+##### <a name="-etckeeper--manage_vcs_package"></a>`manage_vcs_package`
+
+Data type: `Boolean`
+
+Whether to install the package of the VCS, from `vcs_packages`. It is
+declared with `stdlib::ensure_packages`, so an identical declaration
+elsewhere does not clash with it.
+
+Default value: `true`
+
+##### <a name="-etckeeper--vcs_packages"></a>`vcs_packages`
+
+Data type: `Hash[Etckeeper::VCS, String[1]]`
+
+The package providing each VCS. Merged with the module data, which only
+lists the names that differ by OS family.
+
+##### <a name="-etckeeper--conf_dir"></a>`conf_dir`
+
+Data type: `Stdlib::Absolutepath`
+
+The configuration directory of etckeeper.
+
+Default value: `'/etc/etckeeper'`
+
+##### <a name="-etckeeper--highlevel_package_manager"></a>`highlevel_package_manager`
+
+Data type: `Etckeeper::PackageManager::HighLevel`
+
+HIGHLEVEL_PACKAGE_MANAGER: the package manager whose runs etckeeper
+commits around. The module data sets it for each OS family.
+
+##### <a name="-etckeeper--lowlevel_package_manager"></a>`lowlevel_package_manager`
+
+Data type: `Etckeeper::PackageManager::LowLevel`
+
+LOWLEVEL_PACKAGE_MANAGER: the package database etckeeper lists the
+installed packages from, and whose leftover files (`*.dpkg-*`,
+`*.rpmnew`, `*.pacnew`...) it ignores. The module data sets it for each
+OS family.
+
+##### <a name="-etckeeper--git_commit_options"></a>`git_commit_options`
 
 Data type: `Optional[String[1]]`
 
+GIT_COMMIT_OPTIONS: options of `git commit`.
 
+Default value: `undef`
 
-##### <a name="vcs_user_name"></a>`vcs_user_name`
+##### <a name="-etckeeper--hg_commit_options"></a>`hg_commit_options`
 
 Data type: `Optional[String[1]]`
 
+HG_COMMIT_OPTIONS: options of `hg commit`.
 
+Default value: `undef`
 
-### <a name="etckeeperconfig"></a>`etckeeper::config`
+##### <a name="-etckeeper--bzr_commit_options"></a>`bzr_commit_options`
 
-The etckeeper::config class.
+Data type: `Optional[String[1]]`
 
-### <a name="etckeeperinstall"></a>`etckeeper::install`
+BZR_COMMIT_OPTIONS: options of `bzr commit`.
 
-The etckeeper::install class.
+Default value: `undef`
+
+##### <a name="-etckeeper--darcs_commit_options"></a>`darcs_commit_options`
+
+Data type: `String[1]`
+
+DARCS_COMMIT_OPTIONS: options of `darcs record`.
+
+Default value: `'-a'`
+
+##### <a name="-etckeeper--avoid_daily_autocommits"></a>`avoid_daily_autocommits`
+
+Data type: `Boolean`
+
+AVOID_DAILY_AUTOCOMMITS: stop the daily cron job of etckeeper from
+committing the changes of /etc. It does not affect the systemd timer.
+
+Default value: `false`
+
+##### <a name="-etckeeper--daily_autocommit_timer"></a>`daily_autocommit_timer`
+
+Data type: `Optional[Boolean]`
+
+Whether the `etckeeper.timer` systemd unit, which commits the changes of
+/etc daily, is enabled and running. Unmanaged when undef. Arch Linux has
+no daily cron job, only this timer, which its package does not enable.
+On Debian and EL, the cron job runs besides the timer unless
+`avoid_daily_autocommits` is set.
+
+Default value: `undef`
+
+##### <a name="-etckeeper--avoid_special_file_warning"></a>`avoid_special_file_warning`
+
+Data type: `Boolean`
+
+AVOID_SPECIAL_FILE_WARNING: do not warn about the special files of /etc
+that the VCS cannot store.
+
+Default value: `false`
+
+##### <a name="-etckeeper--avoid_commit_before_install"></a>`avoid_commit_before_install`
+
+Data type: `Boolean`
+
+AVOID_COMMIT_BEFORE_INSTALL: cancel the installation of packages when
+/etc has uncommitted changes, instead of committing them first.
+
+Default value: `false`
+
+##### <a name="-etckeeper--push_remotes"></a>`push_remotes`
+
+Data type: `Array[String[1]]`
+
+PUSH_REMOTE: the remotes each commit is pushed to, with git or hg. They
+must be configured in the repository.
+
+Default value: `[]`
+
+##### <a name="-etckeeper--vcs_user_name"></a>`vcs_user_name`
+
+Data type: `Optional[String[1]]`
+
+The name the commits are made with, along with `vcs_user_email`, instead
+of the user running etckeeper (or the one behind sudo). Exported from
+etckeeper.conf as the git author and committer, or in HGUSER and EMAIL
+for hg and bzr; darcs always records the user running etckeeper.
+
+Default value: `undef`
+
+##### <a name="-etckeeper--vcs_user_email"></a>`vcs_user_email`
+
+Data type: `Optional[String[1]]`
+
+The email the commits are made with, along with `vcs_user_name`.
+
+Default value: `undef`
+
+##### <a name="-etckeeper--ignores"></a>`ignores`
+
+Data type: `Array[String[1]]`
+
+Globs to ignore, each declaring an `etckeeper::ignore` resource. The
+module data merges the values found at every Hiera level.
+
+Default value: `[]`
 
 ## Defined types
 
-### <a name="etckeeperignore"></a>`etckeeper::ignore`
+### <a name="etckeeper--ignore"></a>`etckeeper::ignore`
 
-Add a glob pattern for the chosen VCS to ignore.
+The pattern is added to the ignore file of the VCS, in its syntax (see
+the `etckeeper::ignore_pattern` function). When the module initialises the
+repository, the pattern is in place before the files of /etc are added;
+later, it is appended after the section etckeeper manages. Ignoring a path
+does not remove it from the repository if it is already tracked, which is
+the case of the files present when the etckeeper package of Debian and
+Ubuntu initialises the repository itself.
+
+As it comes before `etckeeper init`, it cannot be ordered after
+`Class['etckeeper']`.
 
 * **Since** 1.2.0
 
@@ -212,64 +317,128 @@ etckeeper::ignore { '*.foo':
 }
 ```
 
+##### Ignoring a directory
+
+```puppet
+etckeeper::ignore { '/puppetlabs/code/environments/': }
+```
+
 #### Parameters
 
 The following parameters are available in the `etckeeper::ignore` defined type:
 
-* [`ensure`](#ensure)
-* [`glob`](#glob)
+* [`ensure`](#-etckeeper--ignore--ensure)
+* [`glob`](#-etckeeper--ignore--glob)
 
-##### <a name="ensure"></a>`ensure`
+##### <a name="-etckeeper--ignore--ensure"></a>`ensure`
 
 Data type: `Enum['present', 'absent']`
 
-
+Whether the pattern is in the ignore file.
 
 Default value: `'present'`
 
-##### <a name="glob"></a>`glob`
+##### <a name="-etckeeper--ignore--glob"></a>`glob`
 
 Data type: `String[1]`
 
-The pattern to ignore.
+The glob to ignore.
 
 Default value: `$title`
 
+## Functions
+
+### <a name="etckeeper--ignore_pattern"></a>`etckeeper::ignore_pattern`
+
+Type: Puppet Language
+
+The glob is converted the way etckeeper converts its own patterns
+(update-ignore.d/01update-ignore), except that the line must not depend on
+its position in the file, as it may come before the section of etckeeper:
+
+* git escapes `#`, which would start a comment;
+* hg escapes `#` too and prefixes the glob with `glob:`, since the
+  `syntax: glob` line is in the section of etckeeper;
+* bzr takes the glob as is, a leading `#` becoming `[#]` not to be a
+  comment;
+* darcs, which only understands regular expressions, gets one anchored on
+  path components, unless the glob starts or ends with `*`, and a leading
+  `#` escaped.
+
+#### Examples
+
+##### 
+
+```puppet
+etckeeper::ignore_pattern('git', '#*#')        # => '\#*\#'
+etckeeper::ignore_pattern('hg', '#*#')         # => 'glob:\#*\#'
+etckeeper::ignore_pattern('bzr', '#*#')        # => '[#]*#'
+etckeeper::ignore_pattern('darcs', '*.dpkg-*') # => '\.dpkg-'
+```
+
+#### `etckeeper::ignore_pattern(Etckeeper::VCS $vcs, String[1] $glob)`
+
+The glob is converted the way etckeeper converts its own patterns
+(update-ignore.d/01update-ignore), except that the line must not depend on
+its position in the file, as it may come before the section of etckeeper:
+
+* git escapes `#`, which would start a comment;
+* hg escapes `#` too and prefixes the glob with `glob:`, since the
+  `syntax: glob` line is in the section of etckeeper;
+* bzr takes the glob as is, a leading `#` becoming `[#]` not to be a
+  comment;
+* darcs, which only understands regular expressions, gets one anchored on
+  path components, unless the glob starts or ends with `*`, and a leading
+  `#` escaped.
+
+Returns: `String[1]` The line to add to the ignore file.
+
+##### Examples
+
+###### 
+
+```puppet
+etckeeper::ignore_pattern('git', '#*#')        # => '\#*\#'
+etckeeper::ignore_pattern('hg', '#*#')         # => 'glob:\#*\#'
+etckeeper::ignore_pattern('bzr', '#*#')        # => '[#]*#'
+etckeeper::ignore_pattern('darcs', '*.dpkg-*') # => '\.dpkg-'
+```
+
+##### `vcs`
+
+Data type: `Etckeeper::VCS`
+
+The VCS whose ignore file the pattern is for.
+
+##### `glob`
+
+Data type: `String[1]`
+
+The glob to ignore.
+
 ## Data types
 
-### <a name="etckeeperpackagemanagerhighlevel"></a>`Etckeeper::PackageManager::HighLevel`
+### <a name="Etckeeper--PackageManager--HighLevel"></a>`Etckeeper::PackageManager::HighLevel`
 
-The Etckeeper::PackageManager::HighLevel data type.
-
-* **Since** 1.0.0
-
-Alias of
-
-```puppet
-Enum['apt', 'yum', 'zypper', 'pacman']
-```
-
-### <a name="etckeeperpackagemanagerlowlevel"></a>`Etckeeper::PackageManager::LowLevel`
-
-The Etckeeper::PackageManager::LowLevel data type.
+A HIGHLEVEL_PACKAGE_MANAGER known to etckeeper.
 
 * **Since** 1.0.0
 
-Alias of
+Alias of `Enum['apk', 'apt', 'cave', 'dnf', 'emerge', 'pacman', 'pacman-g2', 'xbps', 'yum', 'zypper']`
 
-```puppet
-Enum['dpkg', 'rpm', 'pacman']
-```
+### <a name="Etckeeper--PackageManager--LowLevel"></a>`Etckeeper::PackageManager::LowLevel`
 
-### <a name="etckeepervcs"></a>`Etckeeper::VCS`
-
-The Etckeeper::VCS data type.
+A LOWLEVEL_PACKAGE_MANAGER known to etckeeper.
 
 * **Since** 1.0.0
 
-Alias of
+Alias of `Enum['apk', 'cave', 'dpkg', 'pacman', 'pacman-g2', 'pacmatic', 'qlist', 'rpm', 'xbps']`
 
-```puppet
-Enum['bzr', 'darcs', 'git', 'hg']
-```
+### <a name="Etckeeper--VCS"></a>`Etckeeper::VCS`
+
+A VCS etckeeper can keep /etc in.
+
+* **Since** 1.0.0
+
+Alias of `Enum['bzr', 'darcs', 'git', 'hg']`
 

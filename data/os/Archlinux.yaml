@@ -1,3 +1,5 @@
 ---
 etckeeper::highlevel_package_manager: 'pacman'
 etckeeper::lowlevel_package_manager: 'pacman'
+etckeeper::vcs_packages:
+  bzr: 'breezy'
