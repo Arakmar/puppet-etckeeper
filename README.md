@@ -222,7 +222,8 @@ bundle exec rake module:build
 
 The acceptance tests run with
 [voxpupuli-acceptance](https://github.com/voxpupuli/voxpupuli-acceptance) in
-containers, here on Debian 13 with OpenVox 9:
+containers, here on Debian 13 with OpenVox 9. They leave out the VCS the OS
+does not package (`unpackaged_on` in `spec/support/acceptance/vcs.rb`):
 
 ```
 BEAKER_HYPERVISOR=container_podman BEAKER_SETFILE=debian13-64 BEAKER_PUPPET_COLLECTION=openvox9 bundle exec rake beaker

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 # The package of each VCS, the VCS name when the package of an OS family is
-# not listed, and how the acceptance tests inspect the repository of /etc.
+# not listed, the OS that do not package it (an OS family, a family and major
+# release or an OS name and release) and how the acceptance tests inspect the
+# repository of /etc.
 module EtckeeperAcceptance
   VCS = {
     'git' => {
@@ -26,6 +28,7 @@ module EtckeeperAcceptance
     },
     'bzr' => {
       package: { 'Archlinux' => 'breezy' },
+      unpackaged_on: ['RedHat'],
       directory: '/etc/.bzr',
       ignore_file: '/etc/.bzrignore',
       ignore_line: '[#]ignored*',
@@ -39,6 +42,7 @@ module EtckeeperAcceptance
     },
     'darcs' => {
       package: 'darcs',
+      unpackaged_on: ['RedHat 8', 'Ubuntu 24.04'],
       directory: '/etc/_darcs',
       ignore_file: '/etc/.darcsignore',
       ignore_line: '(^|/)#ignored',
@@ -49,7 +53,23 @@ module EtckeeperAcceptance
     },
   }.freeze
 
+  # The OS of the host as unpackaged_on names it
+  def self.os
+    @os ||= [
+      fact('os.family'),
+      "#{fact('os.family')} #{fact('os.release.major')}",
+      "#{fact('os.name')} #{fact('os.release.full')}",
+    ]
+  end
+
+  # Whether the OS of the host packages a VCS. The hosts are set up when the
+  # specs are loaded, so this can choose the examples to define.
+  def self.packaged?(vcs)
+    (VCS.fetch(vcs).fetch(:unpackaged_on, []) & os).empty?
+  end
+
   # Whether the package manager of the host can install a package.
+
   def package_available?(package)
     command = case fact('os.family')
               when 'Debian' then "apt-get install --simulate --quiet #{package}"
