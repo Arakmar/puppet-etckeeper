@@ -7,11 +7,13 @@ describe 'etckeeper' do
     context "on #{os}" do
       let(:facts) { os_facts }
 
-      package_managers = {
-        'Archlinux' => ['pacman', 'pacman'],
-        'Debian' => ['apt', 'dpkg'],
-        'RedHat' => ['dnf', 'rpm'],
-      }.fetch(os_facts[:os]['family'])
+      let(:package_managers) do
+        {
+          'Archlinux' => %w[pacman pacman],
+          'Debian' => %w[apt dpkg],
+          'RedHat' => %w[dnf rpm],
+        }.fetch(facts[:os]['family'])
+      end
 
       context 'with default parameters' do
         it { is_expected.to compile.with_all_deps }
@@ -149,7 +151,7 @@ describe 'etckeeper' do
             avoid_daily_autocommits: true,
             avoid_special_file_warning: true,
             avoid_commit_before_install: true,
-            push_remotes: ['origin', 'backup'],
+            push_remotes: %w[origin backup],
           }
         end
 

@@ -4,17 +4,10 @@ require 'spec_helper_acceptance'
 
 describe 'etckeeper' do
   # Each VCS replaces the repository of the previous one
-  {
-    'git' => 'git',
-    'hg' => 'mercurial',
-    'bzr' => { 'Archlinux' => 'breezy' },
-    'darcs' => 'darcs',
-  }.each do |vcs, packages|
+  EtckeeperAcceptance::VCS.each do |vcs, paths|
     context "with vcs => #{vcs}" do
-      paths = EtckeeperAcceptance::VCS[vcs]
-
       before(:context) do
-        package = packages.is_a?(Hash) ? packages.fetch(fact('os.family'), vcs) : packages
+        package = paths[:package].is_a?(Hash) ? paths[:package].fetch(fact('os.family'), vcs) : paths[:package]
         skip "#{package} is not available" unless package_available?(package)
       end
 
@@ -63,7 +56,7 @@ describe 'etckeeper' do
 
       # By the module, or by the package of Debian and Ubuntu with git
       describe command(paths[:log]) do
-        its(:stdout) { is_expected.to match(%r{Initial commit}) }
+        its(:stdout) { is_expected.to include('Initial commit') }
       end
 
       # The files exist from the previous VCS, which the initial commit added
@@ -75,7 +68,7 @@ describe 'etckeeper' do
         its(:exit_status) { is_expected.to eq 0 }
         its(:stdout) { is_expected.to match(%r{^(\./)?acceptance-test$}) }
         its(:stdout) { is_expected.to match(%r{^(\./)?etckeeper/etckeeper\.conf$}) }
-        its(:stdout) { is_expected.not_to match(%r{ignored-file}) }
+        its(:stdout) { is_expected.not_to include('ignored-file') }
       end
 
       if paths.fetch(:unclean_works, true)

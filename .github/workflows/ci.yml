@@ -1,9 +1,11 @@
 ---
-# Modelled on the Vox Pupuli reusable workflows
-# (https://github.com/voxpupuli/gha-puppet, basic.yml and beaker.yml). They
-# are inlined rather than reused because gha-puppet installs the bundle
-# without the development group, which is where the PDK Gemfile keeps every
-# test dependency.
+# The static validations and the unit tests come from the Vox Pupuli
+# reusable workflow (https://github.com/voxpupuli/gha-puppet, beaker.yml):
+# rake validate (syntax, metadata, REFERENCE.md freshness), lint and check,
+# RuboCop, then the unit tests on every OpenVox major version of
+# metadata.json, each with the Ruby its packages ship, and the acceptance
+# tests on each supported OS in a container with the OpenVox packages (Arch
+# Linux with its own Puppet package).
 #
 # release.yml calls it before publishing a tag.
 
@@ -25,108 +27,16 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  BUNDLE_WITHOUT: system_tests:release_prep
-
 jobs:
-  setup_matrix:
-    name: Static validations
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    outputs:
-      puppet_unit_test_matrix: ${{ steps.get-outputs.outputs.puppet_unit_test_matrix }}
-      puppet_beaker_test_matrix: ${{ steps.get-outputs.outputs.puppet_beaker_test_matrix }}
-    env:
-      PUPPET_GEM_VERSION: '>= 8.0'
-    steps:
-      - uses: actions/checkout@v7
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-      - name: Display Ruby environment
-        run: bundle env
-      - name: Run static validations
-        run: bundle exec rake validate lint check
-      - name: Run RuboCop
-        run: bundle exec rake rubocop
-      - name: Check that REFERENCE.md is up to date
-        run: bundle exec rake strings:validate:reference
-      - name: Setup test matrices
-        id: get-outputs
-        # The acceptance tests run on OpenVox 8 and the Puppet package of Arch
-        # Linux: the Puppet 8 packages are no longer published, nor available
-        # for Debian 13 and EL 10.
-        run: |
-          env -u GITHUB_OUTPUT bundle exec metadata2gha > matrices
-          grep '^puppet_unit_test_matrix=' matrices >> "$GITHUB_OUTPUT"
-          beaker="$(sed -n 's/^puppet_beaker_test_matrix=//p' matrices)"
-          echo "puppet_beaker_test_matrix=$(jq -c 'map(select(.env.BEAKER_PUPPET_COLLECTION != "puppet8"))' <<< "${beaker}")" >> "$GITHUB_OUTPUT"
-
-  unit:
-    name: Puppet ${{ matrix.puppet }} (Ruby ${{ matrix.ruby }})
-    needs: setup_matrix
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.setup_matrix.outputs.puppet_unit_test_matrix) }}
-    env:
-      PUPPET_GEM_VERSION: '~> ${{ matrix.puppet }}.0'
-    steps:
-      - uses: actions/checkout@v7
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-      - name: Display Ruby environment
-        run: bundle env
-      - name: Run unit tests
-        run: bundle exec rake parallel_spec
-
-  acceptance:
-    name: ${{ matrix.name }}
-    needs: setup_matrix
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.setup_matrix.outputs.puppet_beaker_test_matrix) }}
-    env:
-      BUNDLE_WITHOUT: development:release_prep
-      BEAKER_HYPERVISOR: container_podman
-    steps:
-      - uses: actions/checkout@v7
-      - name: Disable AppArmor
-        run: |
-          # https://bugs.launchpad.net/ubuntu/+source/apparmor/+bug/2093797
-          sudo aa-teardown || true
-          sudo systemctl disable --now apparmor.service
-      - name: Setup Podman
-        run: |
-          systemctl start --user podman.socket
-          echo "DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock" >> "$GITHUB_ENV"
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-      - name: Display Ruby environment
-        run: bundle env
-      - name: Run acceptance tests
-        run: bundle exec rspec spec/acceptance
-        env: ${{ matrix.env }}
+  puppet:
+    name: Puppet
+    uses: voxpupuli/gha-puppet/.github/workflows/beaker.yml@v4
 
   tests:
     name: Test suite
     if: always()
     needs:
-      - unit
-      - acceptance
+      - puppet
     runs-on: ubuntu-24.04
     steps:
       - name: Decide whether the needed jobs succeeded or failed
