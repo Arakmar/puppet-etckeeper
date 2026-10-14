@@ -3,8 +3,12 @@
 require 'spec_helper_acceptance'
 
 describe 'etckeeper' do
-  # Each VCS replaces the repository of the previous one
+  # Each VCS replaces the repository of the previous one. Those the OS does
+  # not package are left out, and skipped when their package turns out to be
+  # missing anyway.
   EtckeeperAcceptance::VCS.each do |vcs, paths|
+    next unless EtckeeperAcceptance.packaged?(vcs)
+
     context "with vcs => #{vcs}" do
       before(:context) do
         package = paths[:package].is_a?(Hash) ? paths[:package].fetch(fact('os.family'), vcs) : paths[:package]
